@@ -3472,6 +3472,8 @@ pub struct Function {
     pub special: bool,
     // Required ordering for the function (if empty, there is no requirement).
     pub order_by: Vec<OrderByExpr>,
+    // Optional return type used in dozer dialect as `function_name<return_type>(arguments)`
+    pub return_type: Option<Ident>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -3503,10 +3505,13 @@ impl fmt::Display for Function {
             } else {
                 ""
             };
+            write!(f, "{}", self.name)?;
+            if let Some(ident) = &self.return_type {
+                write!(f, "<{ident}>")?;
+            }
             write!(
                 f,
-                "{}({}{}{order_by}{})",
-                self.name,
+                "({}{}{order_by}{})",
                 if self.distinct { "DISTINCT " } else { "" },
                 display_comma_separated(&self.args),
                 display_comma_separated(&self.order_by),

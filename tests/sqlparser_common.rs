@@ -841,6 +841,7 @@ fn parse_select_count_wildcard() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(only(&select.projection))
     );
@@ -861,6 +862,7 @@ fn parse_select_count_distinct() {
             distinct: true,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(only(&select.projection))
     );
@@ -1719,6 +1721,7 @@ fn parse_select_having() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             })),
             op: BinaryOperator::Gt,
             right: Box::new(Expr::Value(number("1"))),
@@ -1753,6 +1756,7 @@ fn parse_select_qualify() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             })),
             op: BinaryOperator::Eq,
             right: Box::new(Expr::Value(number("1"))),
@@ -3169,6 +3173,7 @@ fn parse_scalar_function_in_projection() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             }),
             expr_from_projection(only(&select.projection))
         );
@@ -3288,6 +3293,7 @@ fn parse_named_argument_function() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(only(&select.projection))
     );
@@ -3327,6 +3333,7 @@ fn parse_window_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -3365,6 +3372,7 @@ fn test_parse_named_window() {
                     distinct: false,
                     special: false,
                     order_by: vec![],
+                    return_type: None,
                 }),
                 alias: Ident {
                     value: "min1".to_string(),
@@ -3390,6 +3398,7 @@ fn test_parse_named_window() {
                     distinct: false,
                     special: false,
                     order_by: vec![],
+                    return_type: None,
                 }),
                 alias: Ident {
                     value: "max1".to_string(),
@@ -3851,6 +3860,7 @@ fn parse_at_timezone() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             })),
             time_zone: "UTC-06:00".to_string(),
         },
@@ -3878,6 +3888,7 @@ fn parse_at_timezone() {
                             distinct: false,
                             special: false,
                             order_by: vec![],
+                            return_type: None,
                         },)),
                         time_zone: "UTC-06:00".to_string(),
                     },),),
@@ -3889,6 +3900,7 @@ fn parse_at_timezone() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             },),
             alias: Ident {
                 value: "hour".to_string(),
@@ -4047,6 +4059,7 @@ fn parse_table_function() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             });
             assert_eq!(expr, expected_expr);
             assert_eq!(alias, table_alias("a"))
@@ -6473,6 +6486,7 @@ fn parse_time_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -6490,6 +6504,7 @@ fn parse_time_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -6507,6 +6522,7 @@ fn parse_time_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -6524,6 +6540,7 @@ fn parse_time_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -6541,6 +6558,7 @@ fn parse_time_functions() {
             distinct: false,
             special: false,
             order_by: vec![],
+            return_type: None,
         }),
         expr_from_projection(&select.projection[0])
     );
@@ -7006,6 +7024,7 @@ fn parse_pivot_table() {
                 distinct: false,
                 special: false,
                 order_by: vec![],
+                return_type: None,
             }),
             value_column: vec![Ident::new("a"), Ident::new("MONTH")],
             pivot_values: vec![

@@ -169,6 +169,7 @@ pub fn all_dialects() -> TestedDialects {
             Box::new(BigQueryDialect {}),
             Box::new(SQLiteDialect {}),
             Box::new(DuckDbDialect {}),
+            Box::new(DozerDialect {}),
         ],
         options: None,
     }

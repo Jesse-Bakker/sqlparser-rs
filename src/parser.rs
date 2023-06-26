@@ -712,6 +712,7 @@ impl<'a> Parser<'a> {
                         distinct: false,
                         special: true,
                         order_by: vec![],
+                        return_type: None,
                     }))
                 }
                 Keyword::CURRENT_TIMESTAMP
@@ -770,7 +771,7 @@ impl<'a> Parser<'a> {
 
                         if self.consume_token(&Token::LParen) {
                             self.prev_token();
-                            self.parse_function(ObjectName(id_parts))
+                            self.parse_function(ObjectName(id_parts), None)
                         } else {
                             Ok(Expr::CompoundIdentifier(id_parts))
                         }
@@ -785,6 +786,15 @@ impl<'a> Parser<'a> {
                             introducer: w.value,
                             value: self.parse_introduced_string_value()?,
                         })
+                    }
+                    // function_name<return_type>(arguments)
+                    Token::Lt
+                        if dialect_of!(self is DozerDialect)
+                        && matches!(self.peek_nth_token(1).token, Token::Word(_))
+                        && self.peek_nth_token(2) == Token::Gt
+                        && self.peek_nth_token(3) == Token::LParen =>
+                    {
+                        self.parse_function_with_return_type(ObjectName(vec![w.to_ident()]))
                     }
                     _ => Ok(Expr::Identifier(w.to_ident())),
                 },
@@ -884,7 +894,18 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_function(&mut self, name: ObjectName) -> Result<Expr, ParserError> {
+    pub fn parse_function_with_return_type(&mut self, name: ObjectName) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::Lt)?;
+        let next_token = self.next_token();
+        let return_type = match next_token.token {
+            Token::Word(return_type) => return_type.to_ident(),
+            _ => self.expected("a return type identifier", next_token)?,
+        };
+        self.expect_token(&Token::Gt)?;
+        self.parse_function(name, Some(return_type))
+    }
+
+    pub fn parse_function(&mut self, name: ObjectName, return_type: Option<Ident>) -> Result<Expr, ParserError> {
         self.expect_token(&Token::LParen)?;
         let distinct = self.parse_all_or_distinct()?.is_some();
         let (args, order_by) = self.parse_optional_args_with_orderby()?;
@@ -905,6 +926,7 @@ impl<'a> Parser<'a> {
             distinct,
             special: false,
             order_by,
+            return_type,
         }))
     }
 
@@ -921,6 +943,7 @@ impl<'a> Parser<'a> {
             distinct: false,
             special: false,
             order_by,
+            return_type: None,
         }))
     }
 
@@ -4465,11 +4488,18 @@ impl<'a> Parser<'a> {
             Token::Word(Word { value, keyword, .. })
                 if (dialect_of!(self is BigQueryDialect) && keyword == Keyword::OFFSET) =>
             {
-                self.parse_function(ObjectName(vec![Ident::new(value)]))
+                self.parse_function(ObjectName(vec![Ident::new(value)]), None)
             }
             Token::Word(Word { value, keyword, .. }) if (keyword == Keyword::NoKeyword) => {
                 if self.peek_token() == Token::LParen {
-                    return self.parse_function(ObjectName(vec![Ident::new(value)]));
+                    return self.parse_function(ObjectName(vec![Ident::new(value)]), None);
+                } else if dialect_of!(self is DozerDialect)
+                    && self.peek_token() == Token::Lt
+                    && matches!(self.peek_nth_token(1).token, Token::Word(_))
+                    && self.peek_nth_token(2) == Token::Gt
+                    && self.peek_nth_token(3) == Token::LParen
+                {
+                    return self.parse_function_with_return_type(ObjectName(vec![Ident::new(value)]));
                 }
                 Ok(Expr::Value(Value::SingleQuotedString(value)))
             }
@@ -6074,7 +6104,7 @@ impl<'a> Parser<'a> {
             Token::Word(w) => Ok(w.value),
             _ => self.expected("an aggregate function name", self.peek_token()),
         }?;
-        let function = self.parse_function(ObjectName(vec![Ident::new(function_name)]))?;
+        let function = self.parse_function(ObjectName(vec![Ident::new(function_name)]), None)?;
         self.expect_keyword(Keyword::FOR)?;
         let value_column = self.parse_object_name()?.0;
         self.expect_keyword(Keyword::IN)?;
